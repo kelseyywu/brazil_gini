@@ -1,0 +1,58 @@
+---
+title: "Brazil GINI Index Analysis"
+author: "Kelsey Wu"
+date: "2/26/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+library(janitor)
+library(ggpubr)
+```
+
+The Gini index is a common statistical measure of income or wealth distribution. The index ranges from 0 to 100: the higher the number, the greater the degree of income inequality. Using World Bank estimates, I graphed Brazil's GINI index from 1981 to 2018. The shaded section indicates a period of economic and social progress, during which inequality decreased dramatically.
+
+```{r setup data, echo = FALSE, message = FALSE}
+
+# Read in World Bank data
+# Extract only Brazil data
+
+brazil_data <- read_excel("brazil_data.xls", skip = 2) %>%
+  clean_names() %>%
+  filter(country_name == "Brazil")
+
+# Conduct pivoting
+
+brazil_clean <- pivot_longer(brazil_data, 
+             cols = starts_with("x"),
+             values_to = "data",
+             values_drop_na = TRUE,
+             names_prefix = "x") %>%
+  select(country_name, name, data)
+
+# Convert type to double
+
+brazil_clean <- brazil_clean %>%
+  mutate(name = as.double(brazil_clean$name))
+
+# Create ggplot
+
+brazil_clean %>%
+ggplot(aes(x = name, y = data)) + 
+  geom_point() + 
+  scale_x_continuous(breaks = c(1985, 1990, 1995, 2000, 2005, 2010, 2015)) + 
+  labs(
+    title = "World Bank Brazil GINI Index Estimates from 1985 to 2018",
+    x = "Year",
+    y = "Gini Index",
+    caption = "Data Source: GINI Index (World Bank estimate), World Bank Development Research Group"
+  ) + 
+  annotate("rect", xmin = 2003, xmax = 2014, ymin = -Inf, ymax = Inf, alpha = .5, fill = 'skyblue1')
+  
+
+ggsave("brazil.jpeg")
+```
